@@ -6,5 +6,5 @@
   nil
   (screen [s f] (raw f "")))
 
-(defn render-fleet [body]
+(defn render [body]
   (str ((fleet [] body))))

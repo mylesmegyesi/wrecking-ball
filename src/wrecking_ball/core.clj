@@ -1,7 +1,5 @@
 (ns wrecking-ball.core
   (:require [clojure.java.io         :refer [file]]
-            [wrecking-ball.fleet     :refer [render-fleet]]
-            [wrecking-ball.hiccup    :refer [render-hiccup]]
             [wrecking-ball.load-path :refer [read-file-from-load-path]]))
 
 (def rendering-engines [{:name :hiccup :extensions ["hiccup" "hiccup.clj"]}
@@ -33,18 +31,25 @@
     (binding [*ns* view-ns#]
       ~@body)))
 
-(defn- rendering-engine [extension]
+(def ^:private render-fn-for-engine
+  (memoize
+    (fn [engine-name]
+      (let [ns-sym (symbol (str "wrecking-ball." (name engine-name)))]
+        (require ns-sym)
+        (ns-resolve (the-ns ns-sym) 'render)))))
+
+(defn- rendering-engine-for-extension [extension]
   (some
     (fn [{:keys [extensions] :as engine}]
-      (some #(when (= % extension) engine) extensions))
+      (some #(when (= % extension) (:name engine)) extensions))
     rendering-engines))
 
 (defn- render [{:keys [body extension template-name] :as template}]
-  (let [engine (rendering-engine extension)
-        render-fn (case (:name engine)
-                    :hiccup render-hiccup
-                    :fleet render-fleet)]
-    (in-template-ns template-name (render-fn body))))
+  (-> extension
+    rendering-engine-for-extension
+    render-fn-for-engine
+    (as-> render-fn
+      (in-template-ns template-name (render-fn body)))))
 
 (def endl (System/getProperty "line.separator"))
 
