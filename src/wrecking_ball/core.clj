@@ -45,7 +45,7 @@
       (some #(when (= % extension) (:name engine)) extensions))
     rendering-engines))
 
-(defn- render [{:keys [body extension template-name] :as template}]
+(defn- render-template [{:keys [body extension template-name] :as template}]
   (-> extension
     rendering-engine-for-extension
     render-fn-for-engine
@@ -66,31 +66,23 @@
     (assoc f :template-name template-name)
     (throw-template-not-found template-name)))
 
-(defn- render-in-layout [body]
-  (if-let [layout (:layout *view-context*)]
-    (binding [*view-context* (assoc *view-context* :template-body body)]
-      (-> layout read-template render))
-    body))
+(defn- -render [template-name]
+  (-> template-name read-template render-template))
 
-(defn render-template
+(defn render
   "Expects the location of a template and any optional parameters. Returns the
   rendered html of the specified template. Also adds any parameters and
   their values to the *view-context*."
-  [template & {:as kwargs}]
-  (with-updated-context kwargs
-    (-> template
-      read-template
-      render
-      render-in-layout)))
+  [template-name & {:as kwargs}]
+  (with-updated-context kwargs (-render template-name)))
 
-(defn render-partial
-  "Expects the location of a partial and any optional parameters. Returns the
-  hiccup data located in the specified partial. Also adds any parameters and
-  their values to the *view-context*."
-  [template & {:as kwargs}]
+(defn render-in-layout
+  "Same as render. If the :layout key is specified, the layout with be
+  rendered with :template-body containing the rendered html of the specified template."
+  [template-name & {:as kwargs}]
   (with-updated-context kwargs
-    (let [parts (vec (.split (str template) "/"))
-          parts (flatten (vector (pop parts) (str "_" (last parts))))
-          template-name (apply str (interpose "/" parts))
-          data (read-template template-name)]
-      (-> template-name read-template render))))
+    (let [template-body (-render template-name)]
+      (if-let [layout (:layout *view-context*)]
+        (binding [*view-context* (assoc *view-context* :template-body template-body)]
+          (-render layout))
+        template-body))))

@@ -1,0 +1,1 @@
+<div><p>hello from fleet!</p><(render (:partial *view-context*) :data-key "data-value")></div>

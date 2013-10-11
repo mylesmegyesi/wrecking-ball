@@ -1,3 +1,3 @@
 [:div
   [:p "hello from hiccup!"]
-  (render-partial "hiccup-partial" :data-key "data-value")]
+  (render (:partial *view-context*) :data-key "data-value")]
