@@ -2,8 +2,9 @@
   (:require [clojure.java.io         :refer [file]]
             [wrecking-ball.load-path :refer [read-file-from-load-path]]))
 
-(def rendering-engines [{:name :hiccup :extensions ["hiccup" "hiccup.clj"]}
-                        {:name :fleet :extensions ["html.fleet" "fleet"]}])
+(def rendering-engines [{:name :hiccup   :extensions ["hiccup" "hiccup.clj"]}
+                        {:name :fleet    :extensions ["html.fleet" "fleet"]}
+                        {:name :mustache :extensions ["html.mustache" "mustache"]}])
 
 (def extensions (vec (mapcat :extensions rendering-engines)))
 
@@ -81,3 +82,15 @@
       read-template
       render
       render-in-layout)))
+
+(defn render-partial
+  "Expects the location of a partial and any optional parameters. Returns the
+  hiccup data located in the specified partial. Also adds any parameters and
+  their values to the *view-context*."
+  [template & {:as kwargs}]
+  (with-updated-context kwargs
+    (let [parts (vec (.split (str template) "/"))
+          parts (flatten (vector (pop parts) (str "_" (last parts))))
+          template-name (apply str (interpose "/" parts))
+          data (read-template template-name)]
+      (-> template-name read-template render))))

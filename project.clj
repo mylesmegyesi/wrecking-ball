@@ -9,7 +9,8 @@
 
   :profiles {:dev {:dependencies [[speclj "2.7.5"]
                                   [hiccup "1.0.2"]
-                                  [fleet "0.10.1"]]
+                                  [fleet "0.10.1"]
+                                  [de.ubercode.clostache/clostache "1.3.1"]]
                    :main speclj.main
                    :aot [speclj.main]
                    :plugins [[speclj "2.7.5"]]

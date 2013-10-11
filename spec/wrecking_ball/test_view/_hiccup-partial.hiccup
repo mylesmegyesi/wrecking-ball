@@ -1,0 +1,1 @@
+[:p (str (:data-key *view-context*) "hello from hiccup partial!")]
